@@ -1,3 +1,19 @@
+/**
+ * This file is part of JSF/Facelets Tag Library for Spring Security TagLibs.
+ *
+ * JSF/Facelets Tag Library for Spring Security TagLibs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JSF/Facelets Tag Library for Spring Security TagLibs is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with JSF/Facelets Tag Library for Spring Security TagLibs.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.malaguna.springsec.taglibs;
 
 
