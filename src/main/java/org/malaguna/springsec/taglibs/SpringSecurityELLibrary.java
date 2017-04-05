@@ -17,13 +17,22 @@
 package org.malaguna.springsec.taglibs;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
+import javax.servlet.ServletContext;
+
+import org.malaguna.cmdit.model.usrmgt.RoleHelper;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
  * Taglib to combine the Spring-Security Project with Facelets <br />
@@ -35,12 +44,50 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * e.g.<code><br />
  * &lt;ui:component rendered='#{sec:ifAllGranted(&quot;ROLE_USER&quot;)'> blablabal &lt;/ui:component&gt;
  *
- *
  * @author Dominik Dorn - http://www.dominikdorn.com/
  * @version %I%, %G%
  * @since 0.5
+ * 
+ * Modification for including cmdit actions as GrantedAuthorities
+ * @author Miguel Angel Laguna - http://malaguna.github.io
  */
 public class SpringSecurityELLibrary {
+	private static SpringSecurityELLibrary instance = null;
+	private RoleHelper roleHelper = null;
+	
+	/**
+	 * Implements private singleton 
+	 * 
+	 * @return
+	 */
+	private static SpringSecurityELLibrary getInstance(){
+		if(instance == null){
+			instance = new SpringSecurityELLibrary();
+		}
+		
+		return instance;
+	}
+	
+	/**
+	 * Private constructor. It is called on first use on xhtml
+	 */
+	private SpringSecurityELLibrary(){
+		FacesContext fctx = FacesContext.getCurrentInstance();
+		if(fctx != null){
+			ExternalContext ectx = fctx.getExternalContext();
+			if(ectx != null){
+				ServletContext sc = (ServletContext) ectx.getContext();
+				if(sc != null){
+					String roleHelperBeanName = sc.getInitParameter("RoleHelperBeanName");
+					if(roleHelperBeanName != null && !"".equals(roleHelperBeanName)){
+						WebApplicationContext wac = WebApplicationContextUtils.getRequiredWebApplicationContext(sc);
+						
+						roleHelper = (RoleHelper) wac.getBean(roleHelperBeanName);
+					}
+				}
+			}
+		}
+	}
 
 	private static Set<String> parseAuthorities(String grantedRoles) {
 		Set<String> parsedAuthorities = new TreeSet<String>();
@@ -90,17 +137,33 @@ public class SpringSecurityELLibrary {
 	 * @return true if any of the given roles are granted to the current user, false otherwise
 	 */
 	public static boolean ifAnyGranted(final String grantedRoles) {
+		boolean result = false;
+		
 		Set<String> parsedAuthorities = parseAuthorities(grantedRoles);
-		if (parsedAuthorities.isEmpty())
-			return false;
-
-		GrantedAuthority[] authorities = getUserAuthorities();
-
-		for (GrantedAuthority authority : authorities) {
-			if (parsedAuthorities.contains(authority.getAuthority()))
-				return true;
+		if (!parsedAuthorities.isEmpty()){
+			GrantedAuthority[] authorities = getUserAuthorities();
+	
+			//Check if any rol is granted
+			for (GrantedAuthority authority : authorities) {
+				result |= parsedAuthorities.contains(authority.getAuthority());
+			}
+			
+			//Check if any actions is granted
+			if(!result){
+				Set<String> actionSet = new HashSet<String>();
+				
+				for (GrantedAuthority authority : authorities) {
+					actionSet.addAll(getInstance().roleHelper.getActionSet(authority.getAuthority()));
+				}
+				
+				Iterator<String> pait = parsedAuthorities.iterator();
+				while(!result && pait.hasNext()){
+					result |= actionSet.contains(pait.next());
+				}
+			}
 		}
-		return false;
+		
+		return result;
 	}
 
 
@@ -190,7 +253,4 @@ public class SpringSecurityELLibrary {
     }
     return !authentication.isAuthenticated();
   }
-
-	public SpringSecurityELLibrary() {
-	}
 }

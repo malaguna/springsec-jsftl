@@ -45,7 +45,6 @@ import javax.faces.view.facelets.TagHandler;
  */
 public class IfAnyGrantedTag extends TagHandler
 {
-
 	private final TagAttribute roles;
 
 	public void apply(FaceletContext faceletContext, UIComponent uiComponent)
@@ -62,13 +61,12 @@ public class IfAnyGrantedTag extends TagHandler
 	}
 
 	public IfAnyGrantedTag(ComponentConfig componentConfig) {
-		super(componentConfig);	
+		super(componentConfig);
+		
 		this.roles = this.getRequiredAttribute("roles");
 		if(this.roles == null)
 			throw new TagAttributeException(this.roles,
 					"The `roles` attribute has to be specified!");
 
 	}
-
-
 }
